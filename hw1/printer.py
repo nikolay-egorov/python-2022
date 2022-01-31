@@ -43,7 +43,16 @@ class Traverser:
             ast.NotEq: '!='
         }
 
+        self.colours = {
+            ast.Constant: "orange",
+            ast.Name: "blue",
+            ast.Assign: "purple",
+            ast.BinOp: "green",
+            ast.Call: "brown",
+            ast.arg: "pink",
+        }
 
+        self.arbit_colour = "gray"
 
     def visit_module(self, module: ast.Module):
         self.visit_elem(module.body)
@@ -56,29 +65,34 @@ class Traverser:
         node = f"{self.stmt_count}. Assignment"
         prev_stmt_c = self.stmt_count
         # self.stmt_count += 1
-        self.G.add_node(node)
+        colour = self.colours.get(type(assgn))
+        self.G.add_node(node, color=colour)
         self.G.add_edge(self.parent, node)
         self.local_count = 1
 
         if len(assgn.targets) == 1:
-            i = f'{prev_stmt_c}.{self.local_count}.{self.visit_elem(assgn.targets[0])}'
+            i = f'{prev_stmt_c}.{self.local_count}. {self.visit_elem(assgn.targets[0])}'
             self.local_count += 1
-            self.G.add_node(i, parent=node)
+            c = self.colours.get(type(assgn.targets[0]))
+            self.G.add_node(i, color=c)
             self.G.add_edge(node, i)
         else:
-            self.G.add_node("Lhs")
+            self.G.add_node("Lhs", colour=self.arbit_colour)
             self.G.add_edge(node, 'Lhs')
             for el in assgn.targets:
                 i = f'{prev_stmt_c}.{self.local_count}. {self.visit_elem(el)}'
+                c = self.colours.get(type(el))
                 self.local_count += 1
-                self.G.add_node(i, parent='Lhs')
+                self.G.add_node(i, color=c)
                 self.G.add_edge('Lhs', i)
 
         t = type(assgn.value)
         if t is ast.Name or t is ast.Constant:
-            i = f'{prev_stmt_c}.{self.local_count}. {self.visit_elem(assgn.value)}'
+            n = self.visit_elem(assgn.value)
+            i = f'{prev_stmt_c}.{self.local_count}. {n}'
+            c = self.colours.get(type(assgn.value), self.arbit_colour)
             self.stmt_count += 1
-            self.G.add_node(i, parent=node)
+            self.G.add_node(i, parent=node, color=c)
             self.G.add_edge(node, i)
         else:
             prev_p = self.parent
@@ -90,12 +104,14 @@ class Traverser:
 
     def visit_const(self, el: ast.Constant):
         # print(f"const: {el.value}")
-        return f"Const: {el.value}\n"
+        return f"Const\n {el.value}"
 
     def visit_call(self, call: ast.Call):
         # print(f"call: {self.visit_elem(call.func)}")
-        node = f"{self.op_pref}\nCall: '{self.visit_elem(call.func)}'"
-        self.G.add_node(node)
+        # self.parent_of_body = call
+        node = f"{self.op_pref}\nCall\n {self.visit_elem(call.func)}"
+        c = self.colours.get(type(call))
+        self.G.add_node(node, color=c)
         self.G.add_edge(self.parent, node)
 
         if len(call.args) != 0:
@@ -105,7 +121,8 @@ class Traverser:
             for i in call.args:
                 if type(i) is ast.Name or type(i) is ast.Constant:
                     el = f"{self.visit_elem(i)}"
-                    self.G.add_node(el)
+                    c = self.colours.get(type(i))
+                    self.G.add_node(el, color=c)
                     self.G.add_edge(node, el)
                 else:
                     self.visit_elem(i)
@@ -113,7 +130,7 @@ class Traverser:
 
     def visitFunc(self, func: ast.FunctionDef):
         node = f"{self.stmt_count}. FunctionDef\n{func.name}"
-        self.G.add_node(node)
+        self.G.add_node(node, color="red")
         self.G.add_edge(self.parent, node)
         self.parent = node
         self.parent_of_body = self.parent
@@ -125,7 +142,6 @@ class Traverser:
 
         self.visit_args(func.args)
         self.stmt_count += 1
-
         self.parent = node
         # self.G.add_node("body block")
         # self.G.add_edge(self.parent, "body block")
@@ -138,13 +154,14 @@ class Traverser:
 
     def visit_arg(self, arg: ast.arg, default):
         if default is not None:
-            node = f"{self.stmt_count}.{self.local_count}. Arg: {arg.arg} with default: {default}"
+            node = f"{self.stmt_count}.{self.local_count}. Arg {arg.arg} with default: {default}"
             # print(f"Arg: {arg.arg} with default: {default}")
         else:
-            node = f"{self.stmt_count}.{self.local_count}. Arg: {arg.arg}"
+            node = f"{self.stmt_count}.{self.local_count}. Arg\n {arg.arg}"
             # print(f"Arg: {arg.arg}")
         self.local_count += 1
-        self.G.add_node(node)
+        c = self.colours.get(type(arg))
+        self.G.add_node(node, color=c)
         self.G.add_edge(self.parent, node)
 
     def visit_args(self, args: ast.arguments):
@@ -154,17 +171,20 @@ class Traverser:
 
     def visit_binop(self, op: ast.BinOp):
         node = f"binOp\n{self.opDict[type(op.op)]}"
-        self.G.add_node(node)
+        c = self.colours.get(ast.BinOp)
+        self.G.add_node(node, color=c)
         self.G.add_edge(self.parent, node)
         # self.local_count = 1
 
         el = f"{self.stmt_count - 1}.{self.local_count}. {self.visit_elem(op.left)}"
+        c = self.colours.get(type(op.left))
         self.local_count += 1
-        self.G.add_node(el, parent=node)
+        self.G.add_node(el, parent=node, color=c)
         self.G.add_edge(node, el)
         el = f"{self.stmt_count - 1}.{self.local_count}. {self.visit_elem(op.right)}"
+        c = self.colours.get(type(op.right))
         self.local_count += 1
-        self.G.add_node(el, parent=node)
+        self.G.add_node(el, color=c)
         self.G.add_edge(node, el)
         # print(f"binop: {op.op} with: lhs: {self.visit_elem(op.left)}, rhs: {self.visit_elem(op.right)}")
 
@@ -180,19 +200,22 @@ class Traverser:
         self.G.add_node(i)
         self.G.add_edge(self.parent, i)
         self.local_count = 1
-        el = f'{self.stmt_count -1}.{self.local_count}. Target\n{self.visit_elem(for_.target)}'
+        prev_pb = self.parent_of_body
+        el = f'{self.stmt_count - 1}.{self.local_count}. Target\n{self.visit_elem(for_.target)}'
+        c = "yellow"
         self.local_count += 1
-        self.G.add_node(el)
+        self.G.add_node(el, color=c)
         self.G.add_edge(i, el)
-
         # i = f"in\n{self.visit_elem(for_.iter)}"
         # self.G.add_node(i)
         # self.G.add_edge(self.parent, i)
         self.op_pref = "in"
         self.parent = i
+        self.parent_of_body = for_
         self.visit_elem(for_.iter)
         self.op_pref = 'Loop'
         self.parent = node
+        self.parent_of_body = prev_pb
 
         self.visit_body(for_.body)
         self.parent = prev_p
@@ -232,7 +255,10 @@ class Traverser:
     def visit_name(self, n: ast.Name):
         n_ = ast.unparse(n)
         # print(n_)
-        return f"Name\n{n_}"
+        if type(self.parent_of_body) is ast.For:
+            return n_
+        else:
+            return f"Name\n{n_}"
 
     def process(self, el: ast.Module):
         d = f"{self.stmt_count}. Module decl"
@@ -247,6 +273,7 @@ class Traverser:
         # self.G.remove_nodes_from(list(nx.isolates(self.G)))
 
     def try_print(self):
+        print(len(self.G.nodes))
         nx.draw(self.G, with_labels=True)
         plt.show()
         p = nx.drawing.nx_pydot.to_pydot(self.G)
