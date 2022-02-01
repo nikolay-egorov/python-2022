@@ -2,10 +2,9 @@ import ast
 import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
-
 import os
 
-os.environ["PATH"] += os.pathsep + 'V:/Program Files (x86)/Graphviz2.38/bin/'
+# os.environ["PATH"] += os.pathsep + 'V:/Program Files (x86)/Graphviz2.38/bin/'
 
 
 class Traverser:
@@ -65,7 +64,6 @@ class Traverser:
     def visit_assign(self, assgn: ast.Assign):
         node = f"{self.stmt_count}. Assignment"
         prev_stmt_c = self.stmt_count
-        # self.stmt_count += 1
         colour = self.colours.get(type(assgn))
         self.G.add_node(node, color=colour)
         self.G.add_edge(self.parent, node)
@@ -108,8 +106,6 @@ class Traverser:
         return f"Const\n {el.value}"
 
     def visit_call(self, call: ast.Call):
-        # print(f"call: {self.visit_elem(call.func)}")
-        # self.parent_of_body = call
         node = f"{self.op_pref}\nCall\n {self.visit_elem(call.func)}"
         c = self.colours.get(type(call))
         self.G.add_node(node, color=c)
@@ -137,7 +133,6 @@ class Traverser:
         self.parent = node
         self.parent_of_body = self.parent
 
-        # print(f"Func: {func.name}")
         self.G.add_node("Arguments")
         self.G.add_edge(self.parent, "Arguments")
         self.parent = "Arguments"
@@ -145,9 +140,6 @@ class Traverser:
         self.visit_args(func.args)
         self.stmt_count += 1
         self.parent = node
-        # self.G.add_node("body block")
-        # self.G.add_edge(self.parent, "body block")
-        # self.parent = "body block"
 
         self.op_pref = "Func"
         self.visit_body(func.body)
@@ -157,10 +149,8 @@ class Traverser:
     def visit_arg(self, arg: ast.arg, default):
         if default is not None:
             node = f"{self.stmt_count}.{self.local_count}. Arg {arg.arg} with default: {default}"
-            # print(f"Arg: {arg.arg} with default: {default}")
         else:
             node = f"{self.stmt_count}.{self.local_count}. Arg\n {arg.arg}"
-            # print(f"Arg: {arg.arg}")
         self.local_count += 1
         c = self.colours.get(type(arg))
         self.G.add_node(node, color=c)
@@ -176,7 +166,6 @@ class Traverser:
         c = self.colours.get(ast.BinOp)
         self.G.add_node(node, color=c)
         self.G.add_edge(self.parent, node)
-        # self.local_count = 1
 
         el = f"{self.stmt_count - 1}.{self.local_count}. {self.visit_elem(op.left)}"
         c = self.colours.get(type(op.left))
@@ -208,9 +197,7 @@ class Traverser:
         self.local_count += 1
         self.G.add_node(el, color=c)
         self.G.add_edge(i, el)
-        # i = f"in\n{self.visit_elem(for_.iter)}"
-        # self.G.add_node(i)
-        # self.G.add_edge(self.parent, i)
+
         self.op_pref = "in"
         self.parent = i
         self.parent_of_body = for_
@@ -232,10 +219,6 @@ class Traverser:
             self.parent = prev_p
             # print(f"orelse: {for_.orelse}")
 
-        # print(f"it param: {self.visit_elem(for_.target)}")
-        # print(f"it range: {self.visit_elem(for_.iter)}")
-        # if for_.orelse is not None:
-        #     print(f"orelse: {for_.orelse}")
 
     def visit_body(self, body):
         node = f"{self.op_pref} statements"
@@ -243,7 +226,6 @@ class Traverser:
         self.G.add_edge(self.parent, node)
         self.parent = node
 
-        # print("\tbody")
         for el in body:
             self.visit_elem(el)
             self.parent = node
@@ -257,7 +239,6 @@ class Traverser:
 
     def visit_name(self, n: ast.Name):
         n_ = ast.unparse(n)
-        # print(n_)
         if type(self.parent_of_body) is ast.For:
             return n_
         else:
@@ -266,19 +247,15 @@ class Traverser:
     def process(self, el: ast.Module):
         d = f"{self.stmt_count}. Module decl"
         self.stmt_count += 1
-        # self.G.add_node("Module decl")
-        # self.parent = "Module decl"
         self.G.add_node(d)
         self.parent = d
         for i in el.body:
             self.visit_elem(i)
 
-        # self.G.remove_nodes_from(list(nx.isolates(self.G)))
-
     def try_print(self):
-        print(len(self.G.nodes))
+        # print(len(self.G.nodes))
         nx.draw(self.G, with_labels=True)
-        plt.show()
+        # plt.show()
         p = nx.drawing.nx_pydot.to_pydot(self.G)
         os.makedirs("hw_1/artifacts", exist_ok=True)
         p.write_png('hw_1/artifacts/ast.png')
