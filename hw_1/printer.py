@@ -46,6 +46,7 @@ class Traverser:
         self.colours = {
             ast.Constant: "orange",
             ast.Name: "blue",
+            ast.Return: "cyan",
             ast.Assign: "purple",
             ast.BinOp: "green",
             ast.Call: "brown",
@@ -120,7 +121,8 @@ class Traverser:
             # print("\targs:")
             for i in call.args:
                 if type(i) is ast.Name or type(i) is ast.Constant:
-                    el = f"{self.visit_elem(i)}"
+                    el = f"{self.stmt_count - 1}.{self.local_count}. {self.visit_elem(i)}"
+                    self.local_count += 1
                     c = self.colours.get(type(i))
                     self.G.add_node(el, color=c)
                     self.G.add_edge(node, el)
@@ -248,7 +250,8 @@ class Traverser:
 
     def visit_return(self, ret: ast.Return):
         node = f"Return\n{self.visit_elem(ret.value)}"
-        self.G.add_node(node)
+        c = self.colours.get(type(ret))
+        self.G.add_node(node, color=c)
         self.G.add_edge(self.parent_of_body, node)
         # print(f"return: {self.visit_elem(ret.value)}")
 
@@ -277,4 +280,5 @@ class Traverser:
         nx.draw(self.G, with_labels=True)
         plt.show()
         p = nx.drawing.nx_pydot.to_pydot(self.G)
-        p.write_png('ast.png')
+        os.makedirs("hw_1/artifacts", exist_ok=True)
+        p.write_png('hw_1/artifacts/ast.png')
