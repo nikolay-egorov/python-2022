@@ -18,7 +18,7 @@ class Traverser:
 
         self.mapping = {
             ast.Module: self.visit_module,
-            ast.FunctionDef: self.visitFunc,
+            ast.FunctionDef: self.visit_func,
             ast.arguments: self.visit_args,
             ast.Assign: self.visit_assign,
             ast.BinOp: self.visit_binop,
@@ -26,7 +26,10 @@ class Traverser:
             ast.Constant: self.visit_const,
             ast.Return: self.visit_return,
             ast.Name: self.visit_name,
-            ast.Call: self.visit_call
+            ast.Call: self.visit_call,
+            ast.List: self.visit_list,
+            ast.Expr: self.visit_expr,
+            ast.Attribute: self.visit_attribute
         }
 
         self.opDict = {
@@ -49,7 +52,9 @@ class Traverser:
             ast.Assign: "purple",
             ast.BinOp: "green",
             ast.Call: "brown",
+            ast.Expr: "brown",  # since returns value
             ast.arg: "pink",
+            ast.List: "brown"  # since constructor call
         }
 
         self.arbit_colour = "gray"
@@ -105,11 +110,48 @@ class Traverser:
         # print(f"const: {el.value}")
         return f"Const\n {el.value}"
 
+    def visit_list(self, el: ast.List):
+        node = f"{self.stmt_count}.{self.local_count}. List\n{ast.unparse(el)}"
+        self.local_count += 1
+        self.G.add_node(node, color=self.colours.get(type(el)))
+        self.G.add_edge(self.parent, node)
+        return node
+
+    def visit_expr(self, el: ast.Expr):
+        self.local_count = 1
+        node = f"{self.stmt_count}. Expr"
+        self.stmt_count += 1
+        c = self.colours.get(type(el))
+        self.G.add_node(node, color=c)
+        self.G.add_edge(self.parent, node)
+        prev_p = self.parent
+        self.parent = node
+        self.visit_elem(el.value)
+        self.parent = prev_p
+
+    def visit_attribute(self, el: ast.Attribute):
+        node = f"{self.stmt_count - 1}.{self.local_count}. Obj Attr\n{el.attr}"
+        self.G.add_node(node)
+        self.G.add_edge(self.parent, node)
+        self.local_count += 1
+        nd = f"of \n{self.visit_elem(el.value)}"
+        self.G.add_node(nd, color=self.colours.get(type(el.value)))
+        self.G.add_edge(node, nd)
+
     def visit_call(self, call: ast.Call):
-        node = f"{self.op_pref}\nCall\n {self.visit_elem(call.func)}"
+        if type(call.func) is ast.Attribute:
+            node = f"Dynamic\nCall"
+        else:
+            node = f"{self.op_pref}\nCall\n {self.visit_elem(call.func)}"
         c = self.colours.get(type(call))
         self.G.add_node(node, color=c)
         self.G.add_edge(self.parent, node)
+
+        if type(call.func) is ast.Attribute:
+            prev_p = self.parent
+            self.parent = node
+            self.visit_elem(call.func)
+            self.parent = prev_p
 
         if len(call.args) != 0:
             prev_p = self.parent
@@ -126,7 +168,7 @@ class Traverser:
                     self.visit_elem(i)
                     self.parent = prev_p
 
-    def visitFunc(self, func: ast.FunctionDef):
+    def visit_func(self, func: ast.FunctionDef):
         node = f"{self.stmt_count}. FunctionDef\n{func.name}"
         self.G.add_node(node, color="red")
         self.G.add_edge(self.parent, node)
@@ -257,5 +299,5 @@ class Traverser:
         nx.draw(self.G, with_labels=True)
         # plt.show()
         p = nx.drawing.nx_pydot.to_pydot(self.G)
-        os.makedirs("hw_1/artifacts", exist_ok=True)
-        p.write_png('hw_1/artifacts/ast.png')
+        os.makedirs("artifacts", exist_ok=True)
+        p.write_png('artifacts/ast.png')
