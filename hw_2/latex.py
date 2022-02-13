@@ -1,5 +1,6 @@
 import os
-from typing import Iterator, Optional, Callable
+import subprocess
+from typing import Iterator, Optional, Callable, TypeVar
 
 
 def array_to_elements_generator(data: list):
@@ -10,7 +11,10 @@ def array_to_elements_generator(data: list):
             yield j
 
 
-def maybe_place(x: Optional[str], f: Callable[[str], str]):
+a = TypeVar('a')
+
+
+def maybe_place(x: Optional[a], f: Callable[[a], str]):
     return f(x) if x is not None else ''
 
 
@@ -53,11 +57,10 @@ def generate_tex(data: list, image: Optional[str]):
         generator=array_to_elements_generator(data), data=data)
 
 
-def save_as_tex(data: str):
+def save_as_tex(data: str, should_generate: Optional[bool]):
     os.makedirs("artifacts", exist_ok=True)
     with open("artifacts/summary.tex", "w", encoding="UTF-8") as text_file:
         text_file.write(data)
+    maybe_place(should_generate, lambda x: os.system('pdflatex -output-directory artifacts artifacts/summary.tex'))
+    # os.system("pdflatex artifacts/summary.tex")
 
-
-def generate_pdf(data: str):
-    pass

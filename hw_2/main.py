@@ -15,4 +15,4 @@ if __name__ == "__main__":
     # """)
     b = generate_tex([[1, 2, 3], [12, 44, 42]], image="artifacts/ast.png")
     print(b)
-    save_as_tex(b)
+    save_as_tex(b, should_generate=True)
