@@ -14,7 +14,7 @@ class Matrix:
         return len(self.data)
 
     def __str__(self):
-        return f"{[self.data[i] for i in range(len(self))]}"
+        return '\n'.join([str(row) for row in self.data])
 
     def check_size(self, rhs: 'Matrix'):
         if len(self) != len(rhs) or len(self.data[0]) != len(rhs.data[0]):
@@ -69,3 +69,7 @@ class Matrix:
             result_matr.append(cur_row)
 
         return Matrix(result_matr)
+
+    def write_to_file(self, filename):
+        with open(filename, "w") as f:
+            f.write(str(self))

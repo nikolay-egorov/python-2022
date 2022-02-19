@@ -3,7 +3,7 @@ import numpy as np
 
 class BaseUnifiedMatrix:
     def __init__(self, data):
-        if data is list:
+        if type(data) is list:
             self.data = np.array(data)
         else:
             self.data = data
@@ -36,6 +36,10 @@ class UMatrix(BaseUnifiedMatrix, np.lib.mixins.NDArrayOperatorsMixin):
         }
 
     _HANDLED_TYPES = (type(np.array), type(list), type(np.ndarray))
+
+    def write_to_file(self, filename):
+        with open(filename, "w") as f:
+            f.write(str(self))
 
     def check_matr_product(self, lhs: 'UMatrix'):
         if self.rows != lhs.cols:
