@@ -29,12 +29,12 @@ class Writer:
 
     def write_hash_results(self):
         os.makedirs("artifacts/hash", exist_ok=True)
-        a = MatrixHash([[1, 0, 1], [0, 1, 0], [0, 0, 1]])
-        c = MatrixHash([[1, 0, 0], [0, 1, 0], [1, 0, 1]])
+        a = MatrixHash([[3, 3, 5], [47, 4, 2], [5, 11, 8]])
+        c = MatrixHash([[4, 7, 3], [47, 9, 1], [3, 1, -3]])
         a.write_to_file("artifacts/hash/A.txt")
         c.write_to_file("artifacts/hash/C.txt")
-        b = MatrixHash([[1, 0, 1], [0, 2, 0], [1, 0, 1]])
-        d = MatrixHash([[1, 0, 1], [0, 2, 0], [1, 0, 1]])
+        b = MatrixHash([[1, 99, 4], [55, 49, -4], [9, 2, 1]])
+        d = MatrixHash([[1, 99, 4], [55, 47, -4], [9, 2, 1]])
         b.write_to_file("artifacts/hash/B.txt")
         d.write_to_file("artifacts/hash/D.txt")
         fst = MatrixHash((a @ b).data)
