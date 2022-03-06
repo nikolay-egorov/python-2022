@@ -5,8 +5,6 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from functools import reduce
 
 
-# 0.50039259627 - goal for 2, 1000
-# 0.25019629813 - goal for 4, 1000
 def integrate(f, a, b, start=0, n_iter=1000, silent_mode=False):
     t = time.time()
     acc = 0
@@ -15,7 +13,8 @@ def integrate(f, a, b, start=0, n_iter=1000, silent_mode=False):
         acc += f(a + i * step) * step
     # my_info = f"Thread:{threading.get_ident()}. At {t} started. Took {time.time() - t} s"
     if not silent_mode:
-        my_info = f"Thread:{threading.get_ident()}. Started at {time.time()}."
+        t_ = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        my_info = f"Thread:{threading.get_ident()}. Started at {t_}."
     else:
         my_info = f"{time.time() - t}"
     return acc, my_info
@@ -44,15 +43,6 @@ def parallel_integrate(f, a, b, *c, n_jobs=1, n_iter=1000, silent_mode=False):
     futures = []
     thread_step = int(n_iter / n_jobs)
 
-    # print(a)
-    # print(b/ 2)
-    # print(b/ 2)
-    # print(b)
-    # print("---")
-    # for i in boarder_generator():
-    #     print(i)
-    # print("---")
-    # return 0
     t = time.time()
 
     with get_proper_manager() as executor:
@@ -65,12 +55,6 @@ def parallel_integrate(f, a, b, *c, n_jobs=1, n_iter=1000, silent_mode=False):
             nxt = next(boarders, None)
             if nxt is not None and abs(nxt - b) < 0.0000001:
                 break
-
-        # for i in range(0, n_iter, thread_step):
-        #     futures.append(executor.submit(integrate, f, a_, b_, start=0, n_iter=500))
-
-        # futures.append(executor.submit(integrate, f, a, b / 2, start=0, n_iter=500))
-        # futures.append(executor.submit(integrate, f, b / 2, b, start=0, n_iter=500))
 
     ans = reduce(lambda lhs, rhs: (lhs[0] + rhs[0], '\n'.join([lhs[1], rhs[1]])), map(lambda x: x.result(), futures))
     total = time.time() - t
@@ -99,12 +83,11 @@ def produce_results(inner_log_mode: bool, thread_count: int, mode: str, n_iter: 
             f.write(f"Single-thread result. Time taken: {float(t[-1]):.6f} ms\n\n")
 
         for i in range(2, thread_count * 2 + 1):
-            res = parallel_integrate(math.cos, 0, math.pi / 2, mode, n_jobs=i, n_iter=n_iter)
+            res = parallel_integrate(math.cos, 0, math.pi / 2, mode, n_jobs=i, n_iter=n_iter, silent_mode=not inner_log_mode)
             if inner_log_mode:
-                f.write(f"{i}\t{res[1]}\n")
+                f.write(f"{i}:\n{res[0][-1]}\n")
             else:
-                f.write(f"{i}\t{float(res[-1]):.6f}\n")
-
+                f.write(f"{i}\t\t{float(res[-1]):.6f}\n")
 
 
 if __name__ == "__main__":
@@ -112,3 +95,5 @@ if __name__ == "__main__":
     # print(parallel_integrate(math.cos, 0, math.pi / 2, "async", n_jobs=6, n_iter=100000))
     produce_results(False, 8, "async", 100000)
     produce_results(False, 8, "process", 100000)
+    produce_results(True, 8, "async", 100000)
+    produce_results(True, 8, "process", 100000)

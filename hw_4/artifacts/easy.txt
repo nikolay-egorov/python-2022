@@ -1,0 +1,4 @@
+Times measures for running fub func 10 times with argument= 100000
+Sync: 5.00 s
+Multi-threaded version: 4.26 s
+Multi-processed version: 1.36 s

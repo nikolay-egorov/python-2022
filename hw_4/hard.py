@@ -56,6 +56,8 @@ class MPCommunicator:
             while True:
                 msg = sys.stdin.readline()
                 if not msg:
+                    t = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                    f.write(f"{t}. Exit signal from the user\n")
                     break
                 t = strftime("%Y-%m-%d %H:%M:%S", gmtime())
                 f.write(f"{t}. Send msg: '{msg.strip()}' to A\n")
