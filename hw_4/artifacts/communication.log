@@ -1,0 +1,9 @@
+2022-03-06 09:30:09. Send msg: 'Hello' to A
+2022-03-06 09:30:14. Received msg: 'uryyb' from B
+2022-03-06 09:30:16. Send msg: 'Can you hear me?' to A
+2022-03-06 09:30:24. Received msg: 'pna lbh urne zr?' from B
+2022-03-06 09:30:24. Send msg: 'Right' to A
+2022-03-06 09:30:34. Received msg: 'evtug' from B
+2022-03-06 09:30:34. Send msg: 'Bye' to A
+2022-03-06 09:30:44. Received msg: 'olr' from B
+2022-03-06 09:30:44. Exit signal from the user
