@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 
+import aiofiles
 import aiohttp as aiohttp
 
 
@@ -10,15 +11,18 @@ async def download_job(download_number: int, p: str, from_url: str):
         "https://picsum.photos": 600
     }
 
-    def file_open(num: int):
-        return open(f"{p}/{num}.png", "bw")
+    async def single_job(it: int, s: aiohttp.ClientSession):
+        async with aiofiles.open(f"{p}/{it}.png", "bw") as f:
+            async with s.get(full_url) as ans:
+                await f.write(await (ans.content.read()))
 
+    jobs = []
     async with aiohttp.ClientSession() as session:
         full_url = f"{from_url}/{params.get(from_url, '')}"
         for i in range(1, download_number + 1):
-            with file_open(i) as f:
-                async with session.get(full_url) as ans:
-                    f.write((await ans.content.read()))
+            jobs.append(single_job(i, session))
+        # await asyncio.wait(tasks)
+        await asyncio.gather(*jobs)
 
 
 def download_results(download_num: int, dest: str, from_url: str = "https://picsum.photos"):
